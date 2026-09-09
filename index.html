@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAP 数学自适应测试平台 · 5-6 年级</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <!-- 顶部导航 -->
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo">MAP</span>
+      <span class="brand-text">数学自适应测试平台</span>
+      <span class="brand-sub">5–6 年级 · 自编模拟题</span>
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-mode="home">首页</button>
+      <button class="nav-btn" data-mode="practice">练习模式</button>
+      <button class="nav-btn" data-mode="adaptive">自适应测试</button>
+      <button class="nav-btn" data-mode="review">错题回顾</button>
+      <button class="nav-btn" data-mode="stats">学习统计</button>
+      <button class="nav-btn" data-mode="about">关于</button>
+    </nav>
+  </header>
+
+  <main class="main">
+    <!-- 首页 -->
+    <section class="view active" id="view-home">
+      <div class="hero">
+        <h1>MAP 数学自适应测试平台</h1>
+        <p class="hero-sub">面向上海民办双语学校 5–6 年级学生的数学水平测试与讲解平台</p>
+        <div class="hero-stats">
+          <div class="stat">
+            <div class="stat-num" id="stat-total">0</div>
+            <div class="stat-label">题库总数</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num" id="stat-done">0</div>
+            <div class="stat-label">已完成</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num" id="stat-accuracy">—</div>
+            <div class="stat-label">正确率</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num" id="stat-rit">—</div>
+            <div class="stat-label">估计 RIT</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mode-cards">
+        <div class="mode-card" data-mode="practice">
+          <div class="mode-icon">📚</div>
+          <h2>练习模式</h2>
+          <p>按知识点分类练习，每题立即反馈，含详细讲解</p>
+          <ul class="mode-features">
+            <li>5 大领域 40+ 题</li>
+            <li>5 个 RIT 难度档</li>
+            <li>每题配套视频/图文讲解</li>
+            <li>可标记"我喜欢""不确定"等标签</li>
+          </ul>
+          <button class="primary-btn" data-mode="practice">开始练习</button>
+        </div>
+
+        <div class="mode-card" data-mode="adaptive">
+          <div class="mode-icon">🎯</div>
+          <h2>自适应测试</h2>
+          <p>模拟 NWEA MAP 真实自适应算法，估算当前 RIT 水平</p>
+          <ul class="mode-features">
+            <li>15–20 题自适应</li>
+            <li>答对升难度，答错降难度</li>
+            <li>目标 50% 正确率</li>
+            <li>结束后给出 RIT 估计 + 知识图谱</li>
+          </ul>
+          <button class="primary-btn" data-mode="adaptive">开始测试</button>
+        </div>
+
+        <div class="mode-card" data-mode="review">
+          <div class="mode-icon">🔁</div>
+          <h2>错题回顾</h2>
+          <p>复习做错的题，强化理解</p>
+          <ul class="mode-features">
+            <li>自动收集错题</li>
+            <li>查看原题 + 正确答案 + 讲解</li>
+            <li>可重做或标记"已掌握"</li>
+            <li>支持按领域筛选</li>
+          </ul>
+          <button class="primary-btn" data-mode="review">查看错题</button>
+        </div>
+
+        <div class="mode-card" data-mode="stats">
+          <div class="mode-icon">📊</div>
+          <h2>学习统计</h2>
+          <p>追踪学习进度，发现薄弱环节</p>
+          <ul class="mode-features">
+            <li>按领域正确率分布</li>
+            <li>RIT 估计变化曲线</li>
+            <li>答题时长分析</li>
+            <li>本地存储，零数据上传</li>
+          </ul>
+          <button class="primary-btn" data-mode="stats">查看统计</button>
+        </div>
+      </div>
+
+      <div class="legal-note">
+        <strong>题库说明：</strong>本平台题库为基于 CCSS 美国共同核心州立标准自编的 MAP 风格模拟题，<strong>不是 NWEA 官方真题</strong>。NWEA Measures of Academic Progress 受 NWEA 版权保护，未授权复制官方真题。本平台为合规的备考与水平评估辅助工具。
+      </div>
+    </section>
+
+    <!-- 练习模式视图 -->
+    <section class="view" id="view-practice">
+      <div class="practice-header">
+        <h2>练习模式</h2>
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label>年级：</label>
+            <select id="filter-grade">
+              <option value="all">全部</option>
+              <option value="1">G1 (一年级)</option>
+              <option value="2">G2 (二年级)</option>
+              <option value="3">G3 (三年级)</option>
+              <option value="4">G4 (四年级)</option>
+              <option value="5">G5 (五年级)</option>
+              <option value="6">G6 (六年级)</option>
+              <option value="7">G7 (七年级)</option>
+              <option value="8">G8 (八年级)</option>
+              <option value="9">G9 (九年级)</option>
+              <option value="10">G10 (高一)</option>
+              <option value="11">G11 (高二)</option>
+              <option value="12">G12 (高三)</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>领域：</label>
+            <select id="filter-domain">
+              <option value="all">全部</option>
+              <option value="number">数与运算</option>
+              <option value="fraction">分数与小数</option>
+              <option value="algebra">代数初步</option>
+              <option value="geometry">几何与测量</option>
+              <option value="data">数据分析</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>难度：</label>
+            <select id="filter-level">
+              <option value="all">全部</option>
+              <option value="1">Level 1（RIT 180-195）</option>
+              <option value="2">Level 2（RIT 195-210）</option>
+              <option value="3">Level 3（RIT 210-220）</option>
+              <option value="4">Level 4（RIT 220-230）</option>
+              <option value="5">Level 5（RIT 230+，MAP 最高）</option>
+              <option value="6">Level 6（Pre-Calc/高中拓展，RIT 240+）</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <button class="secondary-btn" id="practice-shuffle">🔀 打乱顺序</button>
+          </div>
+        </div>
+        <div class="progress-info">
+          <span id="practice-progress">第 1 题 / 共 0 题</span>
+          <span id="practice-accuracy">正确率 0%</span>
+        </div>
+      </div>
+
+      <div class="question-card" id="practice-question">
+        <!-- 题目由 JS 渲染 -->
+      </div>
+
+      <div class="question-nav">
+        <button class="nav-action-btn" id="practice-prev">← 上一题</button>
+        <button class="nav-action-btn" id="practice-mark">⭐ 收藏</button>
+        <button class="nav-action-btn" id="practice-skip">跳过 ⏭</button>
+        <button class="nav-action-btn" id="practice-next">下一题 →</button>
+      </div>
+    </section>
+
+    <!-- 自适应测试视图 -->
+    <section class="view" id="view-adaptive">
+      <div class="adaptive-header">
+        <h2>自适应测试</h2>
+        <div class="adaptive-status">
+          <div class="status-item">
+            <div class="status-label">已答题数</div>
+            <div class="status-value" id="adaptive-count">0</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">当前难度</div>
+            <div class="status-value" id="adaptive-level">Level 3</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">正确率</div>
+            <div class="status-value" id="adaptive-acc">—</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">估计 RIT</div>
+            <div class="status-value" id="adaptive-rit">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="question-card" id="adaptive-question">
+        <!-- 题目由 JS 渲染 -->
+      </div>
+    </section>
+
+    <!-- 错题回顾视图 -->
+    <section class="view" id="view-review">
+      <h2>错题回顾</h2>
+      <p id="review-empty" class="empty-state">还没有错题。开始练习或测试，错题会自动收集到这里。</p>
+      <div id="review-list"></div>
+    </section>
+
+    <!-- 学习统计视图 -->
+    <section class="view" id="view-stats">
+      <h2>学习统计</h2>
+      <div class="stats-grid">
+        <div class="stats-section">
+          <h3>按领域正确率</h3>
+          <div id="domain-chart"></div>
+        </div>
+        <div class="stats-section">
+          <h3>按 RIT 难度正确率</h3>
+          <div id="level-chart"></div>
+        </div>
+        <div class="stats-section">
+          <h3>最近 10 次测试结果</h3>
+          <div id="history-list"></div>
+        </div>
+        <div class="stats-section">
+          <h3>操作</h3>
+          <button class="danger-btn" id="stats-clear">清空所有学习数据</button>
+          <p class="hint">本平台所有数据仅存储在您的浏览器中，不会上传到任何服务器。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 关于视图 -->
+    <section class="view" id="view-about">
+      <h2>关于本平台</h2>
+      <div class="about-content">
+        <h3>题库来源与合规说明</h3>
+        <p>本平台的题库是<strong>基于美国共同核心州立标准（CCSS）自编的 MAP 风格模拟题</strong>，对标 NWEA MAP Growth 5-6 年级数学测评。NWEA Measures of Academic Progress 的官方真题受版权保护，本平台不使用任何官方真题。</p>
+
+        <h3>题目难度分级（基于 RIT 分数）</h3>
+        <table class="rit-table">
+          <tr><th>Level</th><th>RIT 范围</th><th>说明</th><th>对应年级</th></tr>
+          <tr><td>Level 1</td><td>180–195</td><td>4–5 年级基础</td><td>G4–G5 早期</td></tr>
+          <tr><td>Level 2</td><td>195–210</td><td>5 年级中等</td><td>G5</td></tr>
+          <tr><td>Level 3</td><td>210–220</td><td>5–6 年级衔接</td><td>G5–G6</td></tr>
+          <tr><td>Level 4</td><td>220–230</td><td>6 年级中等</td><td>G6</td></tr>
+          <tr><td>Level 5</td><td>230+</td><td>6 年级拔高</td><td>G6 优秀 / G7+</td></tr>
+        </table>
+
+        <h3>技术参数</h3>
+        <ul>
+          <li>自适应算法：答对难度+1，答错难度-1（参考 NWEA 自适应逻辑）</li>
+          <li>每题答题时长：建议 60–90 秒</li>
+          <li>数据存储：localStorage（本地浏览器）</li>
+          <li>支持设备：桌面 / 平板 / 手机</li>
+        </ul>
+
+        <h3>适用人群</h3>
+        <p>上海地区协和系（虹桥 / 万源 / 古北 / 青浦等）、平和、世外、星河湾、包玉刚等民办双语学校 5-6 年级学生；申请三公（小托福 + AMC 8）需要评估数学水平的学生；以及任何希望提升 MAP 数学水平的学生。</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- 答题反馈弹窗 -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">答题反馈</h3>
+        <button class="modal-close" id="modal-close">×</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="primary-btn" id="modal-next">下一题 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 测试结果弹窗 -->
+  <div class="modal-overlay" id="result-overlay">
+    <div class="modal modal-large" id="result-content">
+      <div class="modal-header">
+        <h3>测试结果</h3>
+        <button class="modal-close" id="result-close">×</button>
+      </div>
+      <div class="modal-body" id="result-body"></div>
+      <div class="modal-footer">
+        <button class="secondary-btn" id="result-detail">查看详细分析</button>
+        <button class="primary-btn" id="result-restart">再做一次</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <p>MAP 数学自适应测试平台 · 自编模拟题 · 数据本地存储 · 2026</p>
+  </footer>
+</div>
+
+<script src="questions.js?v=31"></script>
+<script src="app.js?v=22"></script>
+</body>
+</html>

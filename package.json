@@ -1,0 +1,23 @@
+{
+  "name": "map-test-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MAP 数学自适应测试平台 - 上海民办双语 5-6 年级数学模拟题 (NWEA MAP Growth 风格)",
+  "scripts": {
+    "start": "npx serve -s . -l 3000",
+    "dev": "npx serve -s . -l 3000"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "education",
+    "math",
+    "MAP",
+    "NWEA",
+    "adaptive-test",
+    "bilingual",
+    "shanghai"
+  ],
+  "license": "MIT"
+}
