@@ -810,9 +810,19 @@ function init() {
   }
 }
 
-// DOM ready
+// DOM ready - 用 load 而非 DOMContentLoaded，确保 questions.js 加载完
+// (questions.js 有 700KB+，DOMContentLoaded 触发时可能还没下载完)
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', function() {
+    // 再等所有资源 (含 questions.js) 加载完成
+    if (document.readyState === 'complete') {
+      init();
+    } else {
+      window.addEventListener('load', init);
+    }
+  });
+} else if (document.readyState === 'complete') {
+  init();
 } else {
   init();
 }
