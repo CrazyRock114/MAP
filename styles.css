@@ -959,3 +959,44 @@ body {
 .correct-pulse {
   animation: correctPulse 0.4s ease;
 }
+
+/* 题目计时器 (行为分析) */
+.question-timer {
+  margin-right: auto;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  padding: 6px 12px;
+  background: var(--color-bg-soft);
+  border-radius: var(--radius-sm);
+  font-family: 'SF Mono', 'Monaco', monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* 做题行为分析展示 */
+.behavior-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: var(--color-bg-soft);
+  padding: 12px;
+  border-radius: var(--radius-md);
+}
+
+.behavior-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.behavior-label {
+  color: var(--color-text-secondary);
+}
+
+.behavior-value {
+  font-weight: 700;
+  color: var(--color-primary);
+  font-family: 'SF Mono', 'Monaco', monospace;
+  font-size: 14px;
+}

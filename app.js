@@ -215,32 +215,120 @@ function renderQuestion(q, mode) {
       `).join('')}
     </div>
     <div class="question-actions">
+      <span class="question-timer" id="question-timer">⏱ 0s</span>
       <button class="submit-btn" id="submit-btn" disabled>提交答案</button>
     </div>
   `;
   $(`#${mode}-question`).innerHTML = html;
 
+  // ===== 教学分析：行为数据采集 =====
+  const analytics = {
+    qid: q.id,
+    startTime: Date.now(),
+    endTime: null,
+    durationMs: 0,
+    firstInteractionMs: null,
+    interactions: [],
+    hovers: [],
+    selections: [],
+    finalAnswer: null,
+    changedAnswer: false,
+    hoverCount: 0,
+    changeCount: 0,
+  };
+  const hoverState = {};
+
+  // 实时更新计时器
+  const timerEl = $('#question-timer');
+  let timerInterval = setInterval(() => {
+    if (!timerEl) return;
+    const elapsed = Math.floor((Date.now() - analytics.startTime) / 1000);
+    timerEl.textContent = `⏱ ${elapsed}s`;
+  }, 1000);
+
+  const recordInteraction = (type, btn) => {
+    const idx = parseInt(btn.dataset.idx);
+    const label = btn.querySelector('.option-label')?.textContent?.trim() || '';
+    const t = Date.now() - analytics.startTime;
+    analytics.interactions.push({ type, idx, label, t });
+    if (analytics.firstInteractionMs === null) {
+      analytics.firstInteractionMs = t;
+    }
+  };
+
   // 注：上面 html 字符串中已经对用户可控字段 (q.stem, opt.label, opt.text)
   // 做了 escapeHtml 处理，QA 已校验 < > & " ' 等字符安全。
 
   let selectedIdx = null;
-  $$('#options-list .option').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.classList.contains('disabled')) return;
+  // 事件委托：所有交互通过父容器 #options-list 监听
+  const optionsContainer = $$('#options-list')[0];
+  if (optionsContainer) {
+    // 鼠标悬停 (考虑过的选项)
+    optionsContainer.onmouseover = (e) => {
+      const btn = e.target.closest('.option');
+      if (!btn || btn.classList.contains('disabled')) return;
+      const idx = parseInt(btn.dataset.idx);
+      if (hoverState[idx]) return;
+      hoverState[idx] = { startT: Date.now() - analytics.startTime };
+      recordInteraction('hover', btn);
+      if (!analytics.hovers.includes(idx)) {
+        analytics.hovers.push(idx);
+        analytics.hoverCount = analytics.hovers.length;
+      }
+    };
+    // 鼠标移开 (累计悬停时长)
+    optionsContainer.onmouseout = (e) => {
+      const btn = e.target.closest('.option');
+      if (!btn) return;
+      const idx = parseInt(btn.dataset.idx);
+      if (hoverState[idx]) {
+        hoverState[idx].endT = Date.now() - analytics.startTime;
+        hoverState[idx] = null;
+      }
+    };
+    // 键盘焦点 (Tab 键浏览)
+    optionsContainer.onfocusin = (e) => {
+      const btn = e.target.closest('.option');
+      if (!btn || btn.classList.contains('disabled')) return;
+      const idx = parseInt(btn.dataset.idx);
+      if (!hoverState[idx]) {
+        hoverState[idx] = { startT: Date.now() - analytics.startTime, byKeyboard: true };
+        recordInteraction('focus', btn);
+        if (!analytics.hovers.includes(idx)) {
+          analytics.hovers.push(idx);
+          analytics.hoverCount = analytics.hovers.length;
+        }
+      }
+    };
+    // 点击选项 (选择 + 改答案检测)
+    optionsContainer.onclick = (e) => {
+      const btn = e.target.closest('.option');
+      if (!btn || btn.classList.contains('disabled')) return;
       $$('#options-list .option').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       selectedIdx = parseInt(btn.dataset.idx);
+      recordInteraction('select', btn);
+      const prevLast = analytics.selections[analytics.selections.length - 1];
+      if (prevLast !== undefined && prevLast !== selectedIdx) {
+        analytics.changedAnswer = true;
+        analytics.changeCount++;
+      }
+      analytics.selections.push(selectedIdx);
       $('#submit-btn').disabled = false;
-    });
-  });
+    };
+  }
 
   $('#submit-btn').addEventListener('click', () => {
     if (selectedIdx === null) return;
-    submitAnswer(q, selectedIdx, mode);
+    clearInterval(timerInterval);
+    analytics.endTime = Date.now();
+    analytics.durationMs = analytics.endTime - analytics.startTime;
+    analytics.finalAnswer = selectedIdx;
+    submitAnswer(q, selectedIdx, mode, analytics);
   });
 }
 
-function submitAnswer(q, selectedIdx, mode) {
+function submitAnswer(q, selectedIdx, mode, analytics) {
   // 标记选项状态
   const correctIdx = q.answer;
   const isCorrect = selectedIdx === correctIdx;
@@ -258,14 +346,33 @@ function submitAnswer(q, selectedIdx, mode) {
 
   if (mode === 'practice') {
     q._correct = isCorrect;
+    q._analytics = analytics;
     State.practice.answeredSet.add(State.practice.currentIndex);
   } else if (mode === 'adaptive') {
     State.adaptive.questionsAnswered.push({
       qid: q.id,
       level: q.level,
       correct: isCorrect,
-      time: nowISO()
+      time: nowISO(),
+      analytics: analytics || null
     });
+  }
+
+  // 累计答过的题目行为数据
+  if (!State.data.questionLogs) State.data.questionLogs = [];
+  if (analytics) {
+    State.data.questionLogs.push({
+      mode,
+      qid: q.id,
+      domain: q.domain,
+      level: q.level,
+      correct: isCorrect,
+      ...analytics
+    });
+    // 保留最近 500 条避免 localStorage 爆掉
+    if (State.data.questionLogs.length > 500) {
+      State.data.questionLogs = State.data.questionLogs.slice(-500);
+    }
   }
 
   // 错题收集
@@ -511,9 +618,87 @@ function finishAdaptive() {
         <li>点击"再做一次"可重新评估。</li>
       </ul>
     </div>
+
+    <div class="stats-section">
+      <h3>⏱ 做题行为分析</h3>
+      ${renderBehaviorAnalytics()}
+    </div>
   `;
   $('#result-body').innerHTML = body;
   $('#result-overlay').classList.add('active');
+}
+
+// 渲染做题行为分析
+function renderBehaviorAnalytics() {
+  const logs = (State.data.questionLogs || []).filter(l => l.mode === 'adaptive');
+  if (logs.length === 0) {
+    return '<p style="color: var(--color-text-secondary);">本次测试未记录到行为数据。</p>';
+  }
+
+  // 1. 平均思考时间
+  const avgTotal = logs.reduce((s, l) => s + (l.durationMs || 0), 0) / logs.length;
+  const avgFirstInteraction = logs.filter(l => l.firstInteractionMs !== null)
+    .reduce((s, l) => s + l.firstInteractionMs, 0) / Math.max(1, logs.filter(l => l.firstInteractionMs !== null).length);
+  const avgHover = logs.filter(l => l.hovers && l.hovers.length > 0)
+    .reduce((s, l) => s + l.hovers.length, 0) / Math.max(1, logs.filter(l => l.hovers && l.hovers.length > 0).length);
+  const changeRate = logs.filter(l => l.changedAnswer).length / logs.length * 100;
+
+  // 2. 思考时间 vs 正确率
+  const correctLogs = logs.filter(l => l.correct);
+  const wrongLogs = logs.filter(l => !l.correct);
+  const avgTimeCorrect = correctLogs.length > 0 ? correctLogs.reduce((s, l) => s + l.durationMs, 0) / correctLogs.length : 0;
+  const avgTimeWrong = wrongLogs.length > 0 ? wrongLogs.reduce((s, l) => s + l.durationMs, 0) / wrongLogs.length : 0;
+
+  // 3. 犹豫过的"干扰项" - 答错的题里被考虑过但没选的正确选项
+  const waveringQuestions = logs.filter(l => l.changedAnswer).map(l => ({
+    qid: l.qid,
+    hovers: l.hovers,
+    selections: l.selections,
+    final: l.finalAnswer,
+    correct: l.correct,
+    durationMs: l.durationMs,
+    changeCount: l.changeCount,
+  }));
+
+  return `
+    <div class="behavior-summary">
+      <div class="behavior-row">
+        <span class="behavior-label">⏱ 平均总时长</span>
+        <span class="behavior-value">${(avgTotal/1000).toFixed(1)}s</span>
+      </div>
+      <div class="behavior-row">
+        <span class="behavior-label">🧠 首次操作决策时间</span>
+        <span class="behavior-value">${(avgFirstInteraction/1000).toFixed(1)}s</span>
+      </div>
+      <div class="behavior-row">
+        <span class="behavior-label">👆 平均考虑选项数</span>
+        <span class="behavior-value">${avgHover.toFixed(1)} 个</span>
+      </div>
+      <div class="behavior-row">
+        <span class="behavior-label">🔄 改答案率</span>
+        <span class="behavior-value">${changeRate.toFixed(0)}%</span>
+      </div>
+      <div class="behavior-row">
+        <span class="behavior-label">✅ 答对平均时长</span>
+        <span class="behavior-value">${(avgTimeCorrect/1000).toFixed(1)}s</span>
+      </div>
+      <div class="behavior-row">
+        <span class="behavior-label">❌ 答错平均时长</span>
+        <span class="behavior-value">${(avgTimeWrong/1000).toFixed(1)}s</span>
+      </div>
+    </div>
+    ${waveringQuestions.length > 0 ? `
+      <div style="margin-top: 12px;">
+        <h4 style="font-size: 14px; color: var(--color-text-secondary); margin-bottom: 8px;">🔄 犹豫/改答案的题 (${waveringQuestions.length} 道)</h4>
+        <div style="font-size: 13px; color: var(--color-text-secondary); line-height: 1.6;">
+          ${waveringQuestions.slice(0, 5).map(w => {
+            const labels = w.selections.map(idx => String.fromCharCode(65 + idx));
+            return `<div>· 题 ${w.qid}: 选过 <b>${labels.join(' → ')}</b>，${w.changeCount} 次改答案，用时 ${(w.durationMs/1000).toFixed(1)}s</div>`;
+          }).join('')}
+        </div>
+      </div>
+    ` : ''}
+  `;
 }
 
 function interpretRIT(rit) {
