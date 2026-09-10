@@ -7452,16 +7452,6 @@ const DOMAIN_NAMES = {
   data: '数据分析'
 };
 
-// 难度档 RIT 范围映射
-const LEVEL_RANGES = {
-  1: '180–195',
-  2: '195–210',
-  3: '210–220',
-  4: '220–230',
-  5: '230+'
-};
-
 // 暴露给全局
 window.QUESTIONS = QUESTIONS;
 window.DOMAIN_NAMES = DOMAIN_NAMES;
-window.LEVEL_RANGES = LEVEL_RANGES;
